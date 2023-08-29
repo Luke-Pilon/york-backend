@@ -1,12 +1,15 @@
 import { AzureFunction, Context, HttpRequest } from "@azure/functions"
+import User from "../util/classes/User";
 const getDb = require('../util/getDb')
 const bcrypt = require('bcrypt');
 
-
+//TODO
+//Implement function in another file to handle errors
+//IE - function that accepts a status and a message and returns the res object
 const httpTrigger: AzureFunction = async function (context: Context, req: HttpRequest): Promise<void> {
     try {
-        const username = req.body.name;
-        const pw = req.body.password;
+        const username: string = req.body.name;
+        const pw: string = req.body.password;
 
         const db = await getDb();
         const users = db.collection(process.env.MONGODB_USERS);
@@ -38,6 +41,12 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
                 "status": 401
             }
             return;
+        }
+        var userResponse: User;
+        if(user.gameRecords){
+            userResponse = new User(user.name,user.id,user.gameRecords)
+        } else {
+            userResponse = new User(user.name, user.id)
         }
         context.res = {
             "headers": {

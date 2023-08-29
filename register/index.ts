@@ -1,18 +1,22 @@
 import { AzureFunction, Context, HttpRequest } from "@azure/functions"
+import UserInput from "../util/classes/UserInput";
+import User from "../util/classes/User";
 const getDb = require('../util/getDb')
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 
+//TODO
+//Typescript types for Mongo operations
+
 const httpTrigger: AzureFunction = async function (context: Context, req: HttpRequest): Promise<void> {
     try {
-
         const db = await getDb();
         const users = db.collection(process.env.MONGODB_USERS);
 
         const username: string = req.body.name;
         const plaintextPw: string = req.body.password;
 
-        if(username.length<1 || plaintextPw.length<4){
+        if(!username || !plaintextPw || username.length<1 || plaintextPw.length<4){
             const message: string = !username ? "Username is required." : "Password must be at least 4 characters long."
             context.res = {
                 "headers": {
@@ -24,23 +28,20 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
             return;
         }
 
+        const hashedPw:string = await bcrypt.hash(plaintextPw, saltRounds);
 
-        const hashedPw = await bcrypt.hash(plaintextPw, saltRounds);
-
-        const user = {
+        const userInput: UserInput = {
             name: username,
             password: hashedPw
         }
         try {
-            const result = await users.insertOne(user)
+            const result = await users.insertOne(userInput)
+            const user: User = new User(userInput.name,result.insertedId)
             context.res = {
                 "headers": {
                     "Content-Type": "application/json"
                 },
-                "body": {
-                    "name": user.name,
-                    "id": result.insertedId
-                }
+                "body": {user}
             }
         } catch (error) {
             if(error.code === 11000){

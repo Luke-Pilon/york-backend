@@ -1,5 +1,6 @@
 import { AzureFunction, Context, HttpRequest } from "@azure/functions"
 import User from "../util/classes/User";
+import errorResponseBuilder from "../util/errorResponseBuilder";
 const getDb = require('../util/getDb')
 const bcrypt = require('bcrypt');
 
@@ -19,27 +20,11 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
         if(user){
             var result = await bcrypt.compare(pw, user.password)
             if(!result){
-                context.res = {
-                    "headers": {
-                        "Content-Type": "application/json"
-                    },
-                    "body": {
-                        "message": "Incorrect username or password, please try again."
-                    },
-                    "status": 401
-                }
+                context.res = errorResponseBuilder(401, "Incorrect username or password, please try again.")
                 return;
             }
         } else {
-            context.res = {
-                "headers": {
-                    "Content-Type": "application/json"
-                },
-                "body": {
-                    "message": "Incorrect username or password, please try again."
-                },
-                "status": 401
-            }
+            context.res = errorResponseBuilder(401, "Incorrect username or password, please try again.")
             return;
         }
         var userResponse: User;
@@ -55,15 +40,7 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
             "body": user
         }
     } catch (error) {
-        context.res = {
-            "status": 500,
-            "headers": {
-                "Content-Type": "application/json"
-            },
-            "body": {
-                "message": error.toString()
-            }
-        }
+        context.res = errorResponseBuilder(500, error.toString())
     }
 };
 

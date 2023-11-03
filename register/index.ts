@@ -1,6 +1,7 @@
 import { AzureFunction, Context, HttpRequest } from "@azure/functions"
 import UserInput from "../util/classes/UserInput";
 import User from "../util/classes/User";
+import errorResponseBuilder from "../util/errorResponseBuilder";
 const getDb = require('../util/getDb')
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
@@ -18,13 +19,7 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
 
         if(!username || !plaintextPw || username.length<1 || plaintextPw.length<4){
             const message: string = !username ? "Username is required." : "Password must be at least 4 characters long."
-            context.res = {
-                "headers": {
-                    "Content-Type": "application/json"
-                },
-                "status": 400,
-                "body": {"message":message}
-            }
+            context.res = errorResponseBuilder(400, message)
             return;
         }
 
@@ -44,27 +39,14 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
                 "body": {user}
             }
         } catch (error) {
+            //mongodb client error code for unique constraint violation
             if(error.code === 11000){
-                context.res = {
-                    "headers": {
-                        "Content-Type": "application/json"
-                    },
-                    "status": 409,
-                    "body": {"message":"User with that name already exists."}
-                }    
+                context.res = errorResponseBuilder(409, "User with that name already exists.")
             }
         }
 
     } catch (error) {
-        context.res = {
-            "status": 500,
-            "headers": {
-                "Content-Type": "application/json"
-            },
-            "body": {
-                "message": error.toString()
-            }
-        }
+        context.res = errorResponseBuilder(500, error.toString())
     }
 };
 

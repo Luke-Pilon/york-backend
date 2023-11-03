@@ -2,12 +2,12 @@ import GameRecord from "./GameRecord";
 
 class User {
     name: string
-    id: string
+    _id: string
     gameRecords?: GameRecord[]
 
     constructor(name:string, id:string, gameRecords?: GameRecord[]){
         this.name = name
-        this.id = id
+        this._id = id
         if(gameRecords){
             this.gameRecords = gameRecords
         }

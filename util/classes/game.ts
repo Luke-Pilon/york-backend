@@ -1,10 +1,10 @@
 class Game {
     name: string
-    id: string
+    _id: string
 
     constructor(name: string, id:string){
         this.name = name
-        this.id = id
+        this._id = id
     }
 }
 
